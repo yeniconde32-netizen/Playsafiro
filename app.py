@@ -40,7 +40,6 @@ llamadas_oyentes = [
 # --- FUNCION DE VOZ DEL LOCUTOR ---
 def hablar_locutor(texto):
     try:
-        # Usamos acento en español (es) con textos de jerga para simular el personaje
         tts = gTTS(text=texto, lang='es', slow=False)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
@@ -48,7 +47,7 @@ def hablar_locutor(texto):
     except Exception as e:
         return None
 
-# --- PLAYLIST DE MÚSICA ---
+# --- PLAYLIST DE MÚSICA POR DEFECTO ---
 playlist_default = [
     {"title": "Salsa / Ritmo Callejero #1", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
     {"title": "Reparto / Dembow Urbano #2", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
@@ -60,8 +59,8 @@ tab_cabina, tab_anuncios, tab_llamadas, tab_config = st.tabs(["📻 Cabina", "�
 
 with tab_config:
     st.subheader("Carga tu música propia")
-    st.markdown("Sube tus archivos MP3 desde el celular para que suenen al aire en la emisora.")
-    uploaded_files = st.file_uploader("Sube tus rolas", type=["mp3"], accept_multiple_files=True)
+    st.markdown("Sube tus archivos de audio desde el celular (formatos **MP3, M4A o WAV**) para que suenen al aire.")
+    uploaded_files = st.file_uploader("Sube tus rolas", type=["mp3", "m4a", "wav"], accept_multiple_files=True)
     if uploaded_files:
         st.session_state["custom_playlist"] = uploaded_files
         st.success(f"¡Se han cargado {len(uploaded_files)} canciones tuyas al sistema!")
@@ -92,7 +91,7 @@ with tab_cabina:
     
     # Canción al aire
     st.success(f"🔴 **EN AIRE (Música):** {track_title}")
-    st.audio(track_source, format="audio/mp3")
+    st.audio(track_source)
     
     # Botones de control de cabina
     col1, col2, col3 = st.columns(3)
