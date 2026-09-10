@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 from datetime import datetime
+import streamlit.components.v1 as components
 
 # Configuración de la página
 st.set_page_config(
@@ -35,6 +36,16 @@ st.markdown("""
         margin-bottom: 16px;
         backdrop-filter: blur(10px);
     }
+    .ad-banner {
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px dashed #475569;
+        padding: 12px;
+        text-align: center;
+        border-radius: 12px;
+        color: #94a3b8;
+        font-size: 13px;
+        margin: 15px 0;
+    }
     .metric-title { font-size: 14px; color: #94a3b8; }
     .metric-value { font-size: 24px; font-weight: bold; color: #f8fafc; }
     
@@ -60,13 +71,24 @@ if "tokens" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Estados para los minijuegos clásicos
+# Estados dinámicos para los minijuegos
 if "invader_score" not in st.session_state:
-    st.session_state.invader_score = 0
+    st.session_state.invader_score = 21
+if "alien_positions" not in st.session_state:
+    st.session_state.alien_positions = ["👾", "👾", "🛸", "👾", "👾"]
 if "solitaire_deck" not in st.session_state:
-    st.session_state.solitaire_deck = ["A♠", "10♥", "K♦", "7♣", "J♠"]
+    st.session_state.solitaire_deck = ["Q♣", "A♦", "9♥"]
 if "chess_puzzle" not in st.session_state:
     st.session_state.chess_puzzle = {"problema": "Mate en 1: Dama en f7", "resuelto": False}
+
+# Función para mostrar bloques de anuncios monetizables
+def render_ad_slot(slot_name="Banner Principal"):
+    st.markdown(f"""
+        <div class="ad-banner">
+            📢 [Espacio Publicitario Monetizable - {slot_name}]<br>
+            <span style="font-size: 11px; color: #64748b;">Aquí se carga tu código de AdSense / Red de Anuncios automáticamente</span>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Autenticación Simulada si no ha iniciado sesión
 if not st.session_state.logged_in:
@@ -103,6 +125,7 @@ with col_u1:
 with col_u2:
     st.markdown(f"<div style='text-align: right; color: #38bdf8; font-weight: bold;'>${st.session_state.usd_balance:.2f} USD</div>", unsafe_allow_html=True)
 
+render_ad_slot("Cabecera Superior")
 st.markdown("---")
 
 # Navegación con pestañas mejoradas
@@ -129,22 +152,19 @@ with menu_tabs[0]:
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     
-    st.markdown("### 🕹️ Centro de Entretenimiento Rápido")
-    st.info("💡 Explora las pestañas **'Arcade Marcianitos'** y **'Solitario & Ajedrez'** para jugar en vivo y ganar miles de monedas para tu cuenta.")
+    render_ad_slot("Mitad de Página Inicio")
 
-# ----------------- 👾 ARCADE MARCIANITOS (NUEVO) -----------------
+# ----------------- 👾 ARCADE MARCIANITOS -----------------
 with menu_tabs[1]:
     st.markdown("### 👾 Invasores Galácticos (Marcianitos Pro)")
-    st.markdown("<p style='color: #94a3b8;'>Defiende la galaxia de los marcianitos invasores disparando tu nave láser en rondas tácticas.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Defiende la galaxia destruyendo marcianitos en movimiento constante.</p>", unsafe_allow_html=True)
     
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.markdown("#### 🛸 Estado de la Nave: Activa (Escudo al 100%)")
     st.markdown(f"**Naves Derribadas en esta partida:** {st.session_state.invader_score}")
     
-    # Representación visual del campo de batalla
-    cols_inv = st.columns(5)
-    aliens = ["👾", "👾", "🛸", "👾", "👾"]
-    for i, alien in enumerate(aliens):
+    cols_inv = st.columns(len(st.session_state.alien_positions))
+    for i, alien in enumerate(st.session_state.alien_positions):
         with cols_inv[i]:
             st.markdown(f"<div style='background: #1e293b; text-align: center; padding: 12px; border-radius: 8px; font-size: 24px;'>{alien}</div>", unsafe_allow_html=True)
             
@@ -155,37 +175,39 @@ with menu_tabs[1]:
             bounty = random.choice([300, 500, 1000])
             st.session_state.invader_score += 1
             st.session_state.coins += bounty
+            random.shuffle(st.session_state.alien_positions)
             st.success(f"🎯 ¡Impacto directo! Marcianito destruido. +{bounty} monedas.")
             st.rerun()
     with col_fire2:
         if st.button("🔄 Reiniciar Oleada"):
             st.session_state.invader_score = 0
-            st.info("Oleada reiniciada con nuevos invasores.")
+            st.session_state.alien_positions = ["👾", "👾", "🛸", "👾", "👾"]
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
+    render_ad_slot("Pie de Arcade Marcianitos")
 
-# ----------------- 🃏 SOLITARIO & ♟️ AJEDREZ (NUEVOS) -----------------
+# ----------------- 🃏 SOLITARIO & ♟️ AJEDREZ -----------------
 with menu_tabs[2]:
     st.markdown("### 🃏 Solitario Zafiro (Klondike Rápido)")
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.markdown("Cartas activas en mesa:")
+    
     cols_cards = st.columns(len(st.session_state.solitaire_deck))
     for i, card in enumerate(st.session_state.solitaire_deck):
         with cols_cards[i]:
             st.markdown(f"<div style='background: #f8fafc; color: #0f172a; text-align: center; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 18px;'>{card}</div>", unsafe_allow_html=True)
             
     if st.button("🎴 Robar y Combinar Cartas"):
-        new_cards = ["9♥", "Q♣", "10♦", "J♥", "A♦"]
-        st.session_state.solitaire_deck = random.sample(new_cards, 3)
+        pool_cartas = ["A♠", "10♥", "K♦", "7♣", "J♠", "Q♣", "A♦", "9♥", "8♠", "J♥"]
+        st.session_state.solitaire_deck = random.sample(pool_cartas, 3)
         st.session_state.coins += 750
-        st.success("¡Jugada válida en el solitario! +750 monedas acreditadas.")
+        st.success("¡Cartas barajadas y combinadas en mesa! +750 monedas.")
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown("### ♟️ Ajedrez Táctico (Reto de Mate)")
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.markdown(f"**Reto actual:** {st.session_state.chess_puzzle['problema']}")
-    st.markdown("Encuentra la jugada ganadora para asegurar el jaque mate en un movimiento:")
     
     chess_move = st.selectbox("Selecciona tu jugada maestra:", ["Caballo a c6", "Dama a f7 (Mate)", "Torre a d8", "Peón a e4"])
     if st.button("Validar Movimiento de Ajedrez"):
@@ -196,6 +218,7 @@ with menu_tabs[2]:
         else:
             st.warning("⚠️ Movimiento válido, pero el rey escapó. ¡Prueba otra combinación!")
     st.markdown("</div>", unsafe_allow_html=True)
+    render_ad_slot("Pie de Juegos de Mesa")
 
 # ----------------- 🎡 CARRUSEL -----------------
 with menu_tabs[3]:
@@ -210,6 +233,7 @@ with menu_tabs[3]:
             st.rerun()
         else:
             st.error("No tienes tokens disponibles.")
+    render_ad_slot("Patrocinador de Ruleta")
 
 # ----------------- 📢 EVENTOS -----------------
 with menu_tabs[4]:
@@ -232,7 +256,6 @@ with menu_tabs[5]:
     metodo = st.selectbox("Método de Retiro", ["Nequi", "Daviplata", "PSE", "PayPal"])
     destino = st.text_input("Número de celular / Cuenta / Correo", placeholder="Ej: 3185312231")
     
-    # Manejo dinámico seguro de límites corregido
     max_val = max(0.01, st.session_state.usd_balance)
     min_val = min(1.0, max_val)
     monto_retiro = st.number_input("Monto a retirar en USD", min_value=min_val, max_value=max_val, value=max_val)
@@ -255,3 +278,5 @@ with menu_tabs[5]:
             st.markdown(f"- {item}")
     else:
         st.markdown("No hay transacciones recientes.")
+
+render_ad_slot("Footer Inferior Global")
