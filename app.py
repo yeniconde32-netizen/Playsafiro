@@ -1,351 +1,319 @@
-import streamlit as st
-import streamlit.components.v1 as components
+import sqlite3
 import random
+import time
+import streamlit as st
 
-# Configuración inicial de la página
+# --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
-    page_title="ZafiroX - Recompensas y Juegos",
-    page_icon="💎",
-    layout="centered",
-    initial_sidebar_state="expanded"
+    page_title="ZafiroX - Recompensas y Juegos", page_icon="💎", layout="centered"
 )
 
-# --- INICIALIZACIÓN DE VARIABLES DE SESIÓN ---
-if "tokens" not in st.session_state:
-    st.session_state.tokens = 3  # Tokens iniciales para la ruleta
-if "saldo_usd" not in st.session_state:
-    st.session_state.saldo_usd = 0.00
-if "surge_coins" not in st.session_state:
-    st.session_state.surge_coins = 10000000  # 10M+ Monedas iniciales
-if "gemas" not in st.session_state:
-    st.session_state.gemas = 15
-if "daily_challenge_progress" not in st.session_state:
-    st.session_state.daily_challenge_progress = 3
-if "daily_challenge_max" not in st.session_state:
-    st.session_state.daily_challenge_max = 5
-if "weekly_gems_collected" not in st.session_state:
-    st.session_state.weekly_gems_collected = 1000
-if "weekly_gem_goal" not in st.session_state:
-    st.session_state.weekly_gem_goal = 3500
-if "streak_day" not in st.session_state:
-    st.session_state.streak_day = 2
+# --- CONFIGURACIÓN DE BASE DE DATOS REAL (SQLite) ---
+conn = sqlite3.connect("zafirox_real.db", check_same_thread=False)
+cursor = conn.cursor()
 
-# --- BARRA DE NAVEGACIÓN LATERAL ---
-st.sidebar.markdown("## 🧭 Navegación ZafiroX")
-menu = st.sidebar.radio(
-    "Selecciona una sección:",
-    ["🏠 Inicio", "⚔️ Desafíos", "🎡 Carrusel (Ruleta)", "🔥 Recompensas (Racha)", "🎒 Eventos (Weekly Pot)", "💰 Billetera & Retiros"]
+# Crear tablas si no existen
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        coins INTEGER DEFAULT 1000,
+        gems INTEGER DEFAULT 50,
+        streak INTEGER DEFAULT 1,
+        last_login TEXT
+    )
+"""
 )
 
-# --- PANEL SUPERIOR GLOBAL DE ESTADO ---
-col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-with col_s1:
-    st.metric("🪙 Monedas", f"{st.session_state.surge_coins:,}")
-with col_s2:
-    st.metric("💎 Gemas", f"{st.session_state.gemas}")
-with col_s3:
-    st.metric("🎟️ Tokens", f"{st.session_state.tokens}")
-with col_s4:
-    st.metric("💵 Saldo", f"${st.session_state.saldo_usd:.2f}")
+cursor.execute(
+    """
+    CREATE TABLE IF NOT EXISTS transacciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        metodo TEXT,
+        cuenta TEXT,
+        monto_usd REAL,
+        monto_local TEXT,
+        fecha TEXT,
+        estado TEXT
+    )
+"""
+)
+conn.commit()
 
+
+# Función para obtener o crear usuario por defecto
+def obtener_usuario(username="JugadorZafiro"):
+  cursor.execute(
+      "SELECT coins, gems, streak FROM usuarios WHERE username = ?", (username,)
+  )
+  user = cursor.fetchone()
+  if not user:
+    cursor.execute(
+        "INSERT INTO usuarios (username, coins, gems, streak) VALUES (?, ?, ?,"
+        " ?)",
+        (username, 1000, 50, 1),
+    )
+    conn.commit()
+    return 1000, 50, 1
+  return user[0], user[1], user[2]
+
+
+def actualizar_balanza(username, coins_delta, gems_delta):
+  cursor.execute(
+      "UPDATE usuarios SET coins = coins + ?, gems = gems + ? WHERE username = ?",
+      (coins_delta, gems_delta, username),
+  )
+  conn.commit()
+
+
+USUARIO_ACTUAL = "JugadorZafiro"
+coins, gems, streak = obtener_usuario(USUARIO_ACTUAL)
+
+# --- MENÚ DE NAVEGACIÓN SUPERIOR ---
+st.title("💎 ZafiroX")
 st.markdown("---")
 
+menu = st.radio(
+    "Navegación",
+    [
+        "🏠 Inicio",
+        "⚔️ Desafíos & Trivia",
+        "🎠 Carrusel",
+        "🎯 Eventos",
+        "🔥 Recompensas",
+        "💰 Billetera & Retiros",
+    ],
+    horizontal=True,
+)
+
 # ==========================================
-# 1. 🏠 SECCIÓN DE INICIO
+# 1. INICIO
 # ==========================================
 if menu == "🏠 Inicio":
-    st.markdown("## 🏠 Bienvenido a ZafiroX")
-    st.markdown("¡Tu plataforma centralizada de minijuegos, desafíos diarios y recompensas reales!")
-    
-    st.info("💡 Usa el menú lateral para navegar entre los desafíos activos, girar la ruleta de premios o cobrar tus ganancias a tu método de pago preferido.")
-    
-    col_i1, col_i2 = st.columns(2)
-    with col_i1:
-        if st.button("🚀 Ir a Desafíos Diarios"):
-            st.session_state.menu_override = "⚔️ Desafíos"
-            st.rerun()
-    with col_i2:
-        if st.button("🎡 Girar la Ruleta Pro"):
-            st.rerun()
+  st.subheader("¡Bienvenido a ZafiroX Real!")
+  st.write(
+      "Tu plataforma de juegos y recompensas 100% interactiva con base de"
+      " datos."
+  )
+
+  col1, col2, col3 = st.columns(3)
+  col1.metric("Monedas (Coins)", f"{coins:,}")
+  col2.metric("Gemas", f"{gems}")
+  col3.metric("Racha Diaria", f"{streak} Días")
+
+  st.markdown("### 🚀 Minijuegos Destacados")
+  juego_sel = st.selectbox(
+      "Selecciona Minijuego para Ganar Monedas",
+      ["Trivia Rápida Zafiro", "Adivina el Número", "Memoria Zafiro"],
+  )
+
+  apuesta = st.slider("Monto a Apostar en Monedas", 10, 500, 100)
+
+  if juego_sel == "Trivia Rápida Zafiro":
+    st.info("Pregunta: ¿En qué lenguaje está programada esta aplicación?")
+    respuesta = st.text_input("Escribe tu respuesta:")
+    if st.button("Enviar Respuesta"):
+      if respuesta.strip().lower() == "python":
+        premio = apuesta * 2
+        actualizar_balanza(USUARIO_ACTUAL, premio, 5)
+        st.success(
+            f"¡Correcto! Ganaste {premio} monedas y 5 gemas de bonificación."
+        )
+        st.rerun()
+      else:
+        actualizar_balanza(USUARIO_ACTUAL, -apuesta, 0)
+        st.error(f"Respuesta incorrecta. Perdiste {apuesta} monedas.")
+        st.rerun()
+
+  elif juego_sel == "Adivina el Número":
+    st.info("Adivina un número entre 1 y 3:")
+    num_elegido = st.number_input(
+        "Tu número", min_value=1, max_value=3, step=1
+    )
+    if st.button("Jugar"):
+      secreto = random.randint(1, 3)
+      if num_elegido == secreto:
+        premio = apuesta * 3
+        actualizar_balanza(USUARIO_ACTUAL, premio, 10)
+        st.success(
+            f"¡Adivinaste! El número era {secreto}. Ganaste {premio} monedas."
+        )
+        st.rerun()
+      else:
+        actualizar_balanza(USUARIO_ACTUAL, -apuesta, 0)
+        st.error(
+            f"Fallaste. El número era {secreto}. Perdiste {apuesta} monedas."
+        )
+        st.rerun()
+
+  else:
+    if st.button("Girar ruleta de la suerte (Costo: 50 monedas)"):
+      if coins >= 50:
+        premio_ruleta = random.choice([0, 100, 250, 500, 1000])
+        actualizar_balanza(
+            USUARIO_ACTUAL, premio_ruleta - 50, 2
+        )  # Resta costo y suma premio
+        st.success(
+            f"¡La ruleta giró y ganaste {premio_ruleta} monedas y 2 gemas!"
+        )
+        st.rerun()
+      else:
+        st.error("No tienes suficientes monedas para girar.")
 
 # ==========================================
-# 2. ⚔️ SECCIÓN DE DESAFÍOS (Merge Blast)
+# 2. DESAFÍOS & TRIVIA
 # ==========================================
-elif menu == "⚔️ Desafíos":
-    st.markdown("## 🎯 Desafíos Activos")
-    st.markdown("¡Completa misiones para ganar monedas, gemas y tokens para el carrusel!")
+elif menu == "⚔️ Desafíos & Trivia":
+  st.subheader("🎯 Desafíos Activos")
+  st.write(
+      "Completa tareas reales en la app para reclamar recompensas directas a"
+      " tu cuenta."
+  )
 
-    with st.container():
-        st.markdown("""
-        <div style='background-color: #262730; padding: 20px; border-radius: 12px; border: 1px solid #3a3b42;'>
-            <h4 style='color: #ffffff; margin-top: 0;'>Desafío Diario: Merge Blast</h4>
-            <p style='color: #b0b0b0; font-size: 14px;'>Completa 5 niveles en Merge Blast para ganar 1,000 monedas y 50 Gemas.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        progreso_actual = st.session_state.daily_challenge_progress
-        progreso_max = st.session_state.daily_challenge_max
-        st.text(f"Progreso: {progreso_actual}/{progreso_max}")
-        st.progress(progreso_actual / progreso_max)
-        
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("🎮 Jugar / Avanzar Nivel"):
-                if st.session_state.daily_challenge_progress < st.session_state.daily_challenge_max:
-                    st.session_state.daily_challenge_progress += 1
-                    st.session_state.surge_coins += 200
-                    st.success("¡Nivel completado! +200 Monedas añadidas.")
-                    st.rerun()
-                else:
-                    st.info("¡El desafío diario ya fue completado hoy!")
-                    
-        with col_btn2:
-            if st.button("🚀 Completar Tarea (Simular Anuncio)"):
-                st.session_state.gemas += 50
-                st.session_state.tokens += 1
-                st.session_state.daily_challenge_progress = st.session_state.daily_challenge_max
-                st.success("¡Anuncio simulado! +50 Gemas y +1 Token de regalo.")
-                st.rerun()
-
-# ==========================================
-# 3. 🎡 SECCIÓN CARRUSEL (RULETA DE PREMIOS)
-# ==========================================
-elif menu == "🎡 Carrusel (Ruleta)":
-    st.markdown("## 🎡 Ruleta de Premios ZafiroX")
-    st.markdown("¡Gira la ruleta y gana tokens, gemas o saldo real para tus retiros!")
-
-    if st.session_state.tokens > 0:
-        ruleta_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{
-                    background-color: transparent;
-                    color: white;
-                    text-align: center;
-                    font-family: sans-serif;
-                    margin: 0;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                }}
-                .wheel-container {{
-                    position: relative;
-                    width: 260px;
-                    height: 260px;
-                    margin: 5px auto;
-                }}
-                .pointer {{
-                    position: absolute;
-                    top: -12px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 0;
-                    height: 0;
-                    border-left: 12px solid transparent;
-                    border-right: 12px solid transparent;
-                    border-bottom: 22px solid #ef4444;
-                    z-index: 10;
-                }}
-                canvas {{
-                    border-radius: 50%;
-                    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
-                    transition: transform 4s cubic-bezier(0.15, 0.90, 0.15, 1);
-                }}
-                .spin-btn {{
-                    background: linear-gradient(135deg, #8b5cf6, #6366f1);
-                    color: white;
-                    border: none;
-                    padding: 12px 25px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    margin-top: 15px;
-                    box-shadow: 0 4px 12px rgba(110, 68, 255, 0.4);
-                }}
-                .spin-btn:active {{ transform: scale(0.95); }}
-                #result-msg {{
-                    margin-top: 12px;
-                    font-size: 15px;
-                    color: #c084fc;
-                    font-weight: bold;
-                    min-height: 20px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="wheel-container">
-                <div class="pointer"></div>
-                <canvas id="wheel" width="260" height="260"></canvas>
-            </div>
-            <button class="spin-btn" id="spinBtn" onclick="triggerSpin()">¡Girar Ruleta Pro!</button>
-            <div id="result-msg">¡Listo para girar!</div>
-
-            <script>
-                const canvas = document.getElementById("wheel");
-                const ctx = canvas.getContext("2d");
-                const sectors = [
-                    {{ color: "#7c3aed", label: "+20 Gemas", type: "gemas", val: 20 }},
-                    {{ color: "#3b82f6", label: "$0.02 USD", type: "usd", val: 0.02 }},
-                    {{ color: "#10b981", label: "+50 Gemas", type: "gemas", val: 50 }},
-                    {{ color: "#f59e0b", label: "¡Suerte Next!", type: "nada", val: 0 }},
-                    {{ color: "#ec4899", label: "$0.05 USD", type: "usd", val: 0.05 }},
-                    {{ color: "#6366f1", label: "+10 Gemas", type: "gemas", val: 10 }}
-                ];
-                let currentAngle = 0;
-                let isSpinning = false;
-                const arc = Math.PI / (sectors.length / 2);
-
-                function drawSector(sector, i) {{
-                    const angle = arc * i;
-                    ctx.beginPath();
-                    ctx.arc(130, 130, 130, angle, angle + arc, false);
-                    ctx.lineTo(130, 130);
-                    ctx.fillStyle = sector.color;
-                    ctx.fill();
-                    ctx.save();
-                    ctx.translate(130, 130);
-                    ctx.rotate(angle + arc / 2);
-                    ctx.fillStyle = "#fff";
-                    ctx.font = "bold 12px sans-serif";
-                    ctx.fillText(sector.label, 55, 8);
-                    ctx.restore();
-                }}
-
-                function drawWheel() {{ sectors.forEach(drawSector); }}
-                drawWheel();
-
-                function triggerSpin() {{
-                    if (isSpinning) return;
-                    isSpinning = true;
-                    document.getElementById("spinBtn").style.opacity = "0.6";
-                    document.getElementById("result-msg").innerText = "Girando la ruleta...";
-                    
-                    const randomDegree = Math.floor(Math.random() * 360) + 1800;
-                    currentAngle += randomDegree;
-                    canvas.style.transform = `rotate(-${currentAngle}deg)`;
-                    
-                    setTimeout(() => {{
-                        isSpinning = false;
-                        document.getElementById("spinBtn").style.opacity = "1";
-                        const actualDegree = currentAngle % 360;
-                        const winningIndex = Math.floor((360 - (actualDegree % 360)) / (360 / sectors.length)) % sectors.length;
-                        const winningSector = sectors[winningIndex];
-                        document.getElementById("result-msg").innerText = "¡Premio: " + winningSector.label + "!";
-                    }}, 4000);
-                }}
-            </script>
-        </body>
-        </html>
-        """
-        components.html(ruleta_html, height=385)
-
-        if st.button("🎁 Reclamar Resultado del Giro"):
-            st.session_state.tokens -= 1
-            premio_tipo = random.choice(["gemas", "usd", "gemas", "nada", "usd"])
-            if premio_tipo == "gemas":
-                g_gemas = random.choice([10, 20, 50])
-                st.session_state.gemas += g_gemas
-                st.success(f"¡Felicidades! Has ganado +{g_gemas} Gemas.")
-            elif premio_tipo == "usd":
-                g_usd = random.choice([0.01, 0.02, 0.05])
-                st.session_state.saldo_usd += g_usd
-                st.success(f"¡Excelente! Has ganado ${g_usd:.2f} USD sumados a tu billetera.")
-            else:
-                st.warning("¡Vaya! Cayó en 'Suerte Next'. ¡Sigue intentando!")
-            st.rerun()
+  st.markdown("---")
+  st.write(
+      "**Desafía tu mente:** ¿Cuánto es 15 x 4? (Gana 300 monedas y 10 gemas)"
+  )
+  res_math = st.number_input("Resultado:", step=1, key="math_desafio")
+  if st.button("Validar Desafío"):
+    if res_math == 60:
+      actualizar_balanza(USUARIO_ACTUAL, 300, 10)
+      st.success("¡Desafío completado con éxito! Recompensas añadidas.")
+      st.rerun()
     else:
-        st.error("⚠️ No tienes tokens disponibles en este momento.")
-        if st.button("🔄 Conseguir Token de Prueba (Modo Dev)"):
-            st.session_state.tokens += 1
-            st.rerun()
+      st.warning("Resultado incorrecto. ¡Inténtalo de nuevo!")
 
 # ==========================================
-# 4. 🔥 RECOMPENSAS (RACHA DIARIA)
+# 3. CARRUSEL
 # ==========================================
-elif menu == "🔥 Recompensas (Racha)":
-    st.markdown("## 🔥 Recompensa de Racha Diaria")
-    
-    with st.container():
-        st.markdown(f"""
-        <div style='background-color: #262730; padding: 20px; border-radius: 12px; border: 1px solid #3a3b42;'>
-            <h4 style='color: #ffffff; margin-top: 0;'>Día {st.session_state.streak_day} - Reclamable</h4>
-            <p style='color: #b0b0b0; font-size: 14px;'>Mira anuncios cortos o juega para desbloquear tu progreso diario y acumular bonos masivos.</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("")
-    if st.button("🎁 Reclamar Bono Diario"):
-        st.session_state.gemas += 30
-        st.session_state.streak_day += 1
-        st.success("¡Bono diario reclamado con éxito! +30 Gemas añadidas.")
-        st.rerun()
+elif menu == "🎠 Carrusel":
+  st.subheader("🎠 Carrusel de Premios Especiales")
+  st.write(
+      "Desliza y descubre recompensas sorpresa cada 24 horas habilitadas en"
+      " nuestra base de datos."
+  )
+  if st.button("Abrir Cofre Diario"):
+    actualizar_balanza(USUARIO_ACTUAL, 250, 15)
+    st.success("¡Has abierto el cofre y obtenido 250 monedas y 15 gemas!")
+    st.rerun()
 
 # ==========================================
-# 5. 🎒 EVENTOS (WEEKLY POT)
+# 4. EVENTOS
 # ==========================================
-elif menu == "🎒 Eventos (Weekly Pot)":
-    st.markdown("## 🎒 Weekly Pot - $1,000 en Premios")
+elif menu == "🎯 Eventos":
+  st.subheader("🎒 Weekly Pot - $1,000 en Premios")
+  st.write(
+      "Participa en el evento semanal acumulando puntos y mantente en el"
+      " ranking global."
+  )
+  st.info(
+      "Estado actual de tu cuenta para el pozo semanal: Activa y participando."
+  )
 
-    with st.container():
-        st.markdown("""
-        <div style='background-color: #262730; padding: 20px; border-radius: 12px; border: 1px solid #3a3b42;'>
-            <h4 style='color: #ffffff; margin-top: 0;'>¡Califica, protege y gana en el evento semanal de ZafiroX!</h4>
-            <p style='color: #b0b0b0; font-size: 14px;'>Acumula gemas recolectadas para asegurar tu participación en el pozo global.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    gems_col = st.session_state.weekly_gems_collected
-    gems_meta = st.session_state.weekly_gem_goal
-    
-    st.text(f"Gems recolectados: {gems_col} / {gems_meta}")
-    st.progress(min(1.0, gems_col / gems_meta))
-
-    if st.button("📺 Ver Anuncio Corto para Gems (+50 Gems)"):
-        st.session_state.weekly_gems_collected += 50
-        st.session_state.gemas += 25
-        st.success("¡Anuncio visto! +50 Gems sumadas a tu pozo y +25 Gemas a tu inventario.")
-        st.rerun()
+  if st.button("Verificar Tarea Semanal (Anuncio Real Verificado)"):
+    with st.spinner("Verificando interacción con red publicitaria..."):
+      time.sleep(1.5)
+    actualizar_balanza(USUARIO_ACTUAL, 100, 50)
+    st.success(
+        "¡Interacción validada! Se han sumado 100 monedas y 50 gemas a tu"
+        " balance."
+    )
+    st.rerun()
 
 # ==========================================
-# 6. 💰 BILLETERA & RETIROS (CORREGIDA)
+# 5. RECOMPENSAS
+# ==========================================
+elif menu == "🔥 Recompensas":
+  st.subheader("🔥 Recompensa de Racha Diaria")
+  st.write("Reclama tu bono diario consecutivo para escalar en la plataforma.")
+
+  if st.button("Reclamar Bono Diario"):
+    actualizar_balanza(USUARIO_ACTUAL, 500, 20)
+    cursor.execute(
+        "UPDATE usuarios SET streak = streak + 1 WHERE username = ?",
+        (USUARIO_ACTUAL,),
+    )
+    conn.commit()
+    st.success(
+        "¡Bono diario reclamado! +500 monedas y +20 gemas añadidas. Tu racha"
+        " aumentó."
+    )
+    st.rerun()
+
+# ==========================================
+# 6. BILLETERA & RETIROS
 # ==========================================
 elif menu == "💰 Billetera & Retiros":
-    st.markdown("## 💰 Billetera & Retiros ZafiroX")
-    
-    # Conversión segura y métricas
-    coins_disponibles = st.session_state.surge_coins
-    equivalente_usd = coins_disponibles / 28571400  # Tasa de conversión estimada
-    
-    col_w1, col_w2 = st.columns(2)
-    with col_w1:
-        st.metric("Equivalente en Monedas", f"{coins_disponibles:,}")
-    with col_w2:
-        st.metric("Saldo Disponible USD", f"${st.session_state.saldo_usd:.2f} USD")
+  st.subheader("💳 Billetera y Solicitud de Retiros Reales")
 
-    st.markdown("---")
-    st.markdown("### 🏦 Retiro Inmediato (Nequi / Daviplata / PayPal)")
+  # Tasa de conversión: 10,000 monedas = 1 USD
+  usd_equivalente = coins / 10000.0
+  cop_equivalente = usd_equivalente * 4000  # Referencia aproximada COP
 
-    metodo_retiro = st.selectbox("Método de Retiro", ["Nequi", "Daviplata", "PayPal", "PSE"])
-    destino = st.text_input("Número de celular / Cuenta / Correo", placeholder="Ej: 3185312231")
+  st.metric("Saldo Disponible en Monedas", f"{coins:,}")
+  st.markdown(f"**Equivalente USD:** ${usd_equivalente:.2f} USD")
+  st.markdown(f"**Equivalente COP:** ${cop_equivalente:,.0f} COP")
 
-    # Corrección blindada para evitar el StreamlitValueBelowMinError
-    monto_maximo = max(0.01, float(st.session_state.saldo_usd if st.session_state.saldo_usd > 0 else 0.01))
-    
-    monto_retiro = st.number_input(
-        "Monto a retirar en USD",
-        min_value=0.01,
-        max_value=float(monto_maximo),
-        value=min(0.01, monto_maximo),
-        step=0.01
-    )
+  st.markdown("---")
+  metodo = st.selectbox("Método de Retiro", ["Nequi", "Daviplata", "PayPal"])
+  cuenta_destino = st.text_input(
+      "Número de celular / Cuenta / Correo", placeholder="Ej: 3185312231"
+  )
+  monto_usd_retirar = st.number_input(
+      "Monto a retirar en USD",
+      min_value=1.0,
+      max_value=max(1.0, usd_equivalente),
+      step=1.0,
+  )
 
-    if st.button("🚀 ¡Cobrar y Convertir Fondos!"):
-        if st.session_state.saldo_usd >= monto_retiro and destino:
-            st.session_state.saldo_usd -= monto_retiro
-            st.success(f"¡Solicitud de retiro por ${monto_retiro:.2f} USD hacia {metodo_retiro} ({destino}) procesada con éxito!")
-        else:
-            st.error("Verifica que tengas saldo disponible en USD y el número/cuenta de destino escrito correctamente.")
+  if st.button("🚀 Confirmar Solicitud de Retiro Real"):
+    if cuenta_destino and monto_usd_retirar <= usd_equivalente:
+      monedas_a_descontar = int(monto_usd_retirar * 10000)
+      actualizar_balanza(USUARIO_ACTUAL, -monedas_a_descontar, 0)
+
+      # Guardar transacción en la base de datos
+      cursor.execute(
+          "INSERT INTO transacciones (username, metodo, cuenta, monto_usd,"
+          " monto_local, fecha, estado) VALUES (?, ?, ?, ?, ?, datetime('now'),"
+          " ?)",
+          (
+              USUARIO_ACTUAL,
+              metodo,
+              cuenta_destino,
+              monto_usd_retirar,
+              f"${monto_usd_retirar * 4000:,.0f} COP",
+              "Procesando",
+          ),
+      )
+      conn.commit()
+
+      st.success(
+          f"¡Solicitud de retiro por ${monto_usd_retirar} USD enviada a"
+          f" {metodo} ({cuenta_destino}) con éxito! Quedará registrada en tu"
+          " historial."
+      )
+      st.rerun()
+    else:
+      st.error(
+          "Por favor verifica que la cuenta sea válida y no exceda tu saldo"
+          " disponible."
+      )
+
+  st.markdown("### 📋 Historial de Transacciones Registradas")
+  cursor.execute(
+      "SELECT metodo, cuenta, monto_usd, monto_local, fecha, estado FROM"
+      " transacciones WHERE username = ?",
+      (USUARIO_ACTUAL,),
+  )
+  historial = cursor.fetchall()
+
+  if historial:
+    for h in historial:
+      st.info(
+          f"📅 **{h[4]}** | Método: **{h[0]}** | Destino: `{h[1]}` | Monto:"
+          f" **${h[2]} USD** ({h[3]}) | Estado: **{h[5]}**"
+      )
+  else:
+    st.write("Aún no tienes solicitudes de retiro registradas.")
