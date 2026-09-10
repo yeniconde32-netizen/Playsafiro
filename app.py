@@ -48,11 +48,11 @@ st.markdown("""
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
-    st.session_state.username = "Frite"
+    st.session_state.username = "Ñopio"
 if "coins" not in st.session_state:
     st.session_state.coins = 11626
 if "usd_balance" not in st.session_state:
-    st.session_state.usd_balance = 5.00
+    st.session_state.usd_balance = 5.06
 if "gems" not in st.session_state:
     st.session_state.gems = 0
 if "tokens" not in st.session_state:
@@ -60,13 +60,13 @@ if "tokens" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Estados para los minijuegos reales
+# Estados para los minijuegos interactivos reales
 if "word_secret" not in st.session_state:
     st.session_state.word_secret = random.choice(["ZAFIRO", "PYTHON", "STREAMLIT", "NEQUI", "GANAR"])
-if "merge_grid" not in st.session_state:
-    st.session_state.merge_grid = [2, 2, 4, 8]
+if "merge_blocks" not in st.session_state:
+    st.session_state.merge_blocks = [2, 2, 4, 4]
 if "water_tubes" not in st.session_state:
-    st.session_state.water_tubes = {"Tubo 1": ["Azul", "Rojo"], "Tubo 2": ["Rojo", "Azul"]}
+    st.session_state.water_tubes = {"Tubo A": ["🔵 Azul", "🔴 Rojo"], "Tubo B": ["🔴 Rojo", "🔵 Azul"]}
 
 # Autenticación Simulada si no ha iniciado sesión
 if not st.session_state.logged_in:
@@ -88,7 +88,7 @@ if not st.session_state.logged_in:
         reg_u = st.text_input("Crea tu Usuario", key="reg_u")
         reg_p = st.text_input("Contraseña", type="password", key="reg_p")
         if st.button("Registrarse y Ganar $5 USD"):
-            st.session_state.username = reg_u if reg_u else "JugadorZafiro"
+            st.session_state.username = reg_u if reg_u else "Ñopio"
             st.session_state.usd_balance = 5.00
             st.session_state.logged_in = True
             st.success("¡Cuenta creada con éxito! Bono de $5.00 USD acreditado.")
@@ -130,73 +130,88 @@ with menu_tabs[0]:
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("### 🕹️ Sala de Minijuegos Interactivos")
-    selected_game = st.selectbox("Elige un juego real para ganar monedas:", ["Word Kitchen (Adivina Palabra)", "Merge Blast (Combinar Bloques)", "Water Sorter (Clasificar Colores)", "Nailed It! (Precisión al Clavar)"])
+    selected_game = st.selectbox("Elige un juego real:", ["Merge Blast (Fichas Interactivas)", "Word Kitchen (Adivina la Palabra)", "Water Sorter (Clasificar Tubos)", "Nailed It! (Precisión al Clavar)"])
     
     st.markdown("---")
     
-    # 1. WORD KITCHEN REAL
-    if selected_game == "Word Kitchen (Adivina Palabra)":
+    # 1. MERGE BLAST INTERACTIVO REAL
+    if selected_game == "Merge Blast (Fichas Interactivas)":
+        st.markdown("#### 🧩 Merge Blast - Tablero de Fichas")
+        st.markdown("Toca las fichas para combinarlas y hacer crecer tu puntaje:")
+        
+        # Mostrar tablero visual en columnas estilo bloques de juego
+        cols_b = st.columns(len(st.session_state.merge_blocks))
+        for idx, block in enumerate(st.session_state.merge_blocks):
+            with cols_b[idx]:
+                st.markdown(f"<div style='background: #3b82f6; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 20px;'>{block}</div>", unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            if st.button("⚡ Combinar Bloques Adyacentes"):
+                # Evolucionar bloques
+                st.session_state.merge_blocks = [x * 2 for x in st.session_state.merge_blocks]
+                reward_m = 400
+                st.session_state.coins += reward_m
+                st.success(f"¡Fichas fusionadas con éxito! +{reward_m} monedas.")
+                st.rerun()
+        with col_act2:
+            if st.button("🔄 Reiniciar Tablero"):
+                st.session_state.merge_blocks = [2, 2, 4, 4]
+                st.rerun()
+
+    # 2. WORD KITCHEN REAL
+    elif selected_game == "Word Kitchen (Adivina la Palabra)":
         st.markdown("#### 🍳 Word Kitchen")
-        st.markdown(f"Pista: Palabra oculta de {len(st.session_state.word_secret)} letras relacionada con tecnología o premios.")
-        user_word = st.text_input("Ingresa tu palabra en Mayúsculas:", key="word_guess").upper()
-        if st.button("Probar Palabra"):
+        st.markdown(f"Pista: Palabra secreta de **{len(st.session_state.word_secret)} letras** (Opciones clave: ZAFIRO, PYTHON, STREAMLIT, NEQUI, GANAR).")
+        user_word = st.text_input("Escribe tu respuesta:", key="word_guess").upper()
+        if st.button("Enviar Respuesta"):
             if user_word == st.session_state.word_secret:
                 reward = 800
                 st.session_state.coins += reward
-                st.success(f"🎉 ¡Correcto! Ganaste +{reward} monedas.")
+                st.success(f"🎉 ¡Adivinaste la palabra! Ganaste +{reward} monedas.")
                 st.session_state.word_secret = random.choice(["ZAFIRO", "PYTHON", "STREAMLIT", "NEQUI", "GANAR"])
                 st.session_state.history.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Word Kitchen (Win) +{reward}")
                 st.rerun()
             else:
-                st.error("❌ Palabra incorrecta. ¡Inténtalo de nuevo!")
-
-    # 2. MERGE BLAST REAL
-    elif selected_game == "Merge Blast (Combinar Bloques)":
-        st.markdown("#### 🧩 Merge Blast")
-        st.markdown("Combina fichas iguales sumando bloques adyacentes para evolucionar.")
-        st.write("Tablero actual:", st.session_state.merge_grid)
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            if st.button("Hacer Merge (Combinar 2+2)"):
-                st.session_state.merge_grid = [4, 4, 8, 16]
-                st.session_state.coins += 500
-                st.success("¡Merge exitoso! +500 monedas.")
-                st.rerun()
-        with col_m2:
-            if st.button("Reiniciar Tablero"):
-                st.session_state.merge_grid = [2, 2, 4, 8]
-                st.rerun()
+                st.error("❌ ¡Incorrecto! Sigue intentando.")
 
     # 3. WATER SORTER REAL
-    elif selected_game == "Water Sorter (Clasificar Colores)":
+    elif selected_game == "Water Sorter (Clasificar Tubos)":
         st.markdown("#### 🧪 Water Sorter Puzzle")
-        st.markdown("Organiza los líquidos para completar el tubo.")
-        st.write(st.session_state.water_tubes)
-        if st.button("Trasvasar Líquido"):
-            st.session_state.water_tubes["Tubo 1"] = ["Azul", "Azul"]
-            st.session_state.water_tubes["Tubo 2"] = ["Rojo", "Rojo"]
+        st.markdown("Clasifica los líquidos de colores para ordenar los recipientes:")
+        
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            st.markdown(f"<div class='card-box'><b>Tubo A</b><br>{' <br> '.join(st.session_state.water_tubes['Tubo A'])}</div>", unsafe_allow_html=True)
+        with col_t2:
+            st.markdown(f"<div class='card-box'><b>Tubo B</b><br>{' <br> '.join(st.session_state.water_tubes['Tubo B'])}</div>", unsafe_allow_html=True)
+            
+        if st.button("💧 Trasvasar y Ordenar Líquido"):
+            st.session_state.water_tubes["Tubo A"] = ["🔵 Azul", "🔵 Azul"]
+            st.session_state.water_tubes["Tubo B"] = ["🔴 Rojo", "🔴 Rojo"]
             st.session_state.coins += 600
-            st.success("¡Puzzle completado con éxito! +600 monedas.")
+            st.success("¡Nivel de agua resuelto con éxito! +600 monedas.")
             st.rerun()
 
     # 4. NAILED IT! REAL
     elif selected_game == "Nailed It! (Precisión al Clavar)":
         st.markdown("#### 🔨 Nailed It!")
-        st.markdown("Detén el golpe en el momento justo de precisión.")
-        force = st.slider("Fuerza de impacto", 1, 100, 50)
-        if st.button("¡Clavar Clavo!"):
+        st.markdown("Ajusta la fuerza del martillo para clavar exactamente en el centro (Rango ideal: 45 a 55).")
+        force = st.slider("Barra de Fuerza", 1, 100, 50)
+        if st.button("¡Golpear Clavo!"):
             if 45 <= force <= 55:
                 st.session_state.coins += 1000
-                st.success(f"🎯 ¡Impacto perfecto con fuerza {force}! +1,000 monedas.")
+                st.success(f"🎯 ¡Golpe Perfecto! Fuerza {force}. +1,000 monedas.")
             else:
                 st.session_state.coins += 200
-                st.warning(f"🔨 Golpe débil o pasado (Fuerza {force}). Ganaste solo +200 monedas.")
+                st.warning(f"🔨 Golpe débil o desviado (Fuerza {force}). +200 monedas.")
             st.rerun()
 
 # ----------------- ⚔️ DESAFÍOS -----------------
 with menu_tabs[1]:
     st.markdown("### 🎯 Desafíos Activos")
-    st.markdown("<div class='card-box'><b>Desafío Diario:</b> Gana al menos 2 partidas en los minijuegos interactivos.<br><br><b>Progreso:</b> 1/2</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'><b>Desafío Diario:</b> Gana al menos 2 minijuegos interactivos hoy.<br><br><b>Progreso:</b> 1/2</div>", unsafe_allow_html=True)
     if st.button("Completar Misión Diaria"):
         st.session_state.coins += 1500
         st.session_state.gems += 75
@@ -215,7 +230,7 @@ with menu_tabs[2]:
             st.success(f"🎁 ¡Felicidades! Ganaste {premio:,} monedas en la ruleta.")
             st.rerun()
         else:
-            st.error("No tienes tokens. Completa desafíos para ganar más tokens.")
+            st.error("No tienes tokens disponibles.")
 
 # ----------------- 📢 EVENTOS -----------------
 with menu_tabs[3]:
@@ -223,17 +238,16 @@ with menu_tabs[3]:
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     st.markdown(f"**Gems recolectados:** {st.session_state.gems}/350")
     st.progress(min(st.session_state.gems / 350, 1.0))
-    st.markdown("<br>¡Participa en el evento semanal completando minijuegos!")
     if st.button("Reclamar Bonus de Gems (+50 Gems)"):
         st.session_state.gems += 50
-        st.success("¡Bonus reclamado! +50 Gems agregados.")
+        st.success("¡Bonus reclamado! +50 Gems.")
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ----------------- 🔥 PREMIOS -----------------
 with menu_tabs[4]:
     st.markdown("### 🔥 Recompensa de Racha Diaria")
-    st.markdown("<div class='card-box'><b>Día 2 - Reclama tu bono</b><br>Mantén tu racha activa ingresando todos los días.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card-box'><b>Día 2 - Reclama tu bono</b></div>", unsafe_allow_html=True)
     if st.button("Reclamar Bono Diario"):
         st.session_state.coins += 2500
         st.success("¡Bono diario reclamado con éxito! +2,500 monedas.")
