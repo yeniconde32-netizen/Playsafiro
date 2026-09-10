@@ -4,7 +4,7 @@ from datetime import datetime
 
 # Configuración de la página
 st.set_page_config(
-    page_title="ZafiroX - Recompensas y Juegos",
+    page_title="ZafiroX - Recompensas y Juegos Pro",
     page_icon="💎",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -50,28 +50,28 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = "Ñopio"
 if "coins" not in st.session_state:
-    st.session_state.coins = 11626
+    st.session_state.coins = 12420
 if "usd_balance" not in st.session_state:
-    st.session_state.usd_balance = 5.06
+    st.session_state.usd_balance = 5.34
 if "gems" not in st.session_state:
-    st.session_state.gems = 0
+    st.session_state.gems = 15
 if "tokens" not in st.session_state:
     st.session_state.tokens = 3
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Estados para los minijuegos interactivos reales
-if "word_secret" not in st.session_state:
-    st.session_state.word_secret = random.choice(["ZAFIRO", "PYTHON", "STREAMLIT", "NEQUI", "GANAR"])
-if "merge_blocks" not in st.session_state:
-    st.session_state.merge_blocks = [2, 2, 4, 4]
-if "water_tubes" not in st.session_state:
-    st.session_state.water_tubes = {"Tubo A": ["🔵 Azul", "🔴 Rojo"], "Tubo B": ["🔴 Rojo", "🔵 Azul"]}
+# Estados para los minijuegos clásicos
+if "invader_score" not in st.session_state:
+    st.session_state.invader_score = 0
+if "solitaire_deck" not in st.session_state:
+    st.session_state.solitaire_deck = ["A♠", "10♥", "K♦", "7♣", "J♠"]
+if "chess_puzzle" not in st.session_state:
+    st.session_state.chess_puzzle = {"problema": "Mate en 1: Dama en f7", "resuelto": False}
 
 # Autenticación Simulada si no ha iniciado sesión
 if not st.session_state.logged_in:
-    st.markdown("<h1 style='text-align: center; color: #38bdf8;'>💎 ZafiroX</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #94a3b8;'>¡Juega, gana y retira al instante a Nequi y Daviplata!</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #38bdf8;'>💎 ZafiroX Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #94a3b8;'>¡Arcades clásicos, juegos de mesa y retiros instantáneos!</p>", unsafe_allow_html=True)
     
     tab_log1, tab_log2 = st.tabs(["Iniciar Sesión", "Registrarse"])
     
@@ -105,12 +105,12 @@ with col_u2:
 
 st.markdown("---")
 
-# Navegación con pestañas
-menu_tabs = st.tabs(["🏠 Inicio & Juegos", "⚔️ Desafíos", "🎡 Carrusel", "📢 Eventos", "🔥 Premios", "💰 Billetera"])
+# Navegación con pestañas mejoradas
+menu_tabs = st.tabs(["🏠 Billetera & Juegos", "👾 Arcade Marcianitos", "🃏 Solitario & ♟️ Ajedrez", "🎡 Carrusel", "📢 Eventos", "💰 Retiros"])
 
-# ----------------- 🏠 INICIO & JUEGOS REALES -----------------
+# ----------------- 🏠 INICIO & CONVERSIÓN -----------------
 with menu_tabs[0]:
-    st.markdown("### 🏆 Conversión de Monedas")
+    st.markdown("### 🏆 Panel de Monedas y Balance")
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
@@ -120,7 +120,7 @@ with menu_tabs[0]:
         st.markdown("<span class='metric-title'>Equivalente USD</span>", unsafe_allow_html=True)
         st.markdown(f"<span class='metric-value'>${st.session_state.coins / 232500:.2f}</span>", unsafe_allow_html=True)
     
-    if st.button("¡Cobrar y Convertir Monedas!"):
+    if st.button("⚡ Convertir Monedas a USD"):
         earned = st.session_state.coins / 232500
         st.session_state.usd_balance += earned
         st.session_state.history.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Conversión +${earned:.2f} USD")
@@ -128,104 +128,83 @@ with menu_tabs[0]:
         st.success(f"¡Has convertido tus monedas con éxito por ${earned:.2f} USD!")
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("### 🕹️ Sala de Minijuegos Interactivos")
-    selected_game = st.selectbox("Elige un juego real:", ["Merge Blast (Fichas Interactivas)", "Word Kitchen (Adivina la Palabra)", "Water Sorter (Clasificar Tubos)", "Nailed It! (Precisión al Clavar)"])
     
-    st.markdown("---")
-    
-    # 1. MERGE BLAST INTERACTIVO REAL
-    if selected_game == "Merge Blast (Fichas Interactivas)":
-        st.markdown("#### 🧩 Merge Blast - Tablero de Fichas")
-        st.markdown("Toca las fichas para combinarlas y hacer crecer tu puntaje:")
-        
-        # Mostrar tablero visual en columnas estilo bloques de juego
-        cols_b = st.columns(len(st.session_state.merge_blocks))
-        for idx, block in enumerate(st.session_state.merge_blocks):
-            with cols_b[idx]:
-                st.markdown(f"<div style='background: #3b82f6; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 20px;'>{block}</div>", unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        col_act1, col_act2 = st.columns(2)
-        with col_act1:
-            if st.button("⚡ Combinar Bloques Adyacentes"):
-                # Evolucionar bloques
-                st.session_state.merge_blocks = [x * 2 for x in st.session_state.merge_blocks]
-                reward_m = 400
-                st.session_state.coins += reward_m
-                st.success(f"¡Fichas fusionadas con éxito! +{reward_m} monedas.")
-                st.rerun()
-        with col_act2:
-            if st.button("🔄 Reiniciar Tablero"):
-                st.session_state.merge_blocks = [2, 2, 4, 4]
-                st.rerun()
+    st.markdown("### 🕹️ Centro de Entretenimiento Rápido")
+    st.info("💡 Explora las pestañas **'Arcade Marcianitos'** y **'Solitario & Ajedrez'** para jugar en vivo y ganar miles de monedas para tu cuenta.")
 
-    # 2. WORD KITCHEN REAL
-    elif selected_game == "Word Kitchen (Adivina la Palabra)":
-        st.markdown("#### 🍳 Word Kitchen")
-        st.markdown(f"Pista: Palabra secreta de **{len(st.session_state.word_secret)} letras** (Opciones clave: ZAFIRO, PYTHON, STREAMLIT, NEQUI, GANAR).")
-        user_word = st.text_input("Escribe tu respuesta:", key="word_guess").upper()
-        if st.button("Enviar Respuesta"):
-            if user_word == st.session_state.word_secret:
-                reward = 800
-                st.session_state.coins += reward
-                st.success(f"🎉 ¡Adivinaste la palabra! Ganaste +{reward} monedas.")
-                st.session_state.word_secret = random.choice(["ZAFIRO", "PYTHON", "STREAMLIT", "NEQUI", "GANAR"])
-                st.session_state.history.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Word Kitchen (Win) +{reward}")
-                st.rerun()
-            else:
-                st.error("❌ ¡Incorrecto! Sigue intentando.")
-
-    # 3. WATER SORTER REAL
-    elif selected_game == "Water Sorter (Clasificar Tubos)":
-        st.markdown("#### 🧪 Water Sorter Puzzle")
-        st.markdown("Clasifica los líquidos de colores para ordenar los recipientes:")
-        
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            st.markdown(f"<div class='card-box'><b>Tubo A</b><br>{' <br> '.join(st.session_state.water_tubes['Tubo A'])}</div>", unsafe_allow_html=True)
-        with col_t2:
-            st.markdown(f"<div class='card-box'><b>Tubo B</b><br>{' <br> '.join(st.session_state.water_tubes['Tubo B'])}</div>", unsafe_allow_html=True)
-            
-        if st.button("💧 Trasvasar y Ordenar Líquido"):
-            st.session_state.water_tubes["Tubo A"] = ["🔵 Azul", "🔵 Azul"]
-            st.session_state.water_tubes["Tubo B"] = ["🔴 Rojo", "🔴 Rojo"]
-            st.session_state.coins += 600
-            st.success("¡Nivel de agua resuelto con éxito! +600 monedas.")
-            st.rerun()
-
-    # 4. NAILED IT! REAL
-    elif selected_game == "Nailed It! (Precisión al Clavar)":
-        st.markdown("#### 🔨 Nailed It!")
-        st.markdown("Ajusta la fuerza del martillo para clavar exactamente en el centro (Rango ideal: 45 a 55).")
-        force = st.slider("Barra de Fuerza", 1, 100, 50)
-        if st.button("¡Golpear Clavo!"):
-            if 45 <= force <= 55:
-                st.session_state.coins += 1000
-                st.success(f"🎯 ¡Golpe Perfecto! Fuerza {force}. +1,000 monedas.")
-            else:
-                st.session_state.coins += 200
-                st.warning(f"🔨 Golpe débil o desviado (Fuerza {force}). +200 monedas.")
-            st.rerun()
-
-# ----------------- ⚔️ DESAFÍOS -----------------
+# ----------------- 👾 ARCADE MARCIANITOS (NUEVO) -----------------
 with menu_tabs[1]:
-    st.markdown("### 🎯 Desafíos Activos")
-    st.markdown("<div class='card-box'><b>Desafío Diario:</b> Gana al menos 2 minijuegos interactivos hoy.<br><br><b>Progreso:</b> 1/2</div>", unsafe_allow_html=True)
-    if st.button("Completar Misión Diaria"):
-        st.session_state.coins += 1500
-        st.session_state.gems += 75
-        st.success("¡Misión cumplida! +1,500 monedas y +75 Gems.")
+    st.markdown("### 👾 Invasores Galácticos (Marcianitos Pro)")
+    st.markdown("<p style='color: #94a3b8;'>Defiende la galaxia de los marcianitos invasores disparando tu nave láser en rondas tácticas.</p>", unsafe_allow_html=True)
+    
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 🛸 Estado de la Nave: Activa (Escudo al 100%)")
+    st.markdown(f"**Naves Derribadas en esta partida:** {st.session_state.invader_score}")
+    
+    # Representación visual del campo de batalla
+    cols_inv = st.columns(5)
+    aliens = ["👾", "👾", "🛸", "👾", "👾"]
+    for i, alien in enumerate(aliens):
+        with cols_inv[i]:
+            st.markdown(f"<div style='background: #1e293b; text-align: center; padding: 12px; border-radius: 8px; font-size: 24px;'>{alien}</div>", unsafe_allow_html=True)
+            
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_fire1, col_fire2 = st.columns(2)
+    with col_fire1:
+        if st.button("🚀 Disparar Láser Principal"):
+            bounty = random.choice([300, 500, 1000])
+            st.session_state.invader_score += 1
+            st.session_state.coins += bounty
+            st.success(f"🎯 ¡Impacto directo! Marcianito destruido. +{bounty} monedas.")
+            st.rerun()
+    with col_fire2:
+        if st.button("🔄 Reiniciar Oleada"):
+            st.session_state.invader_score = 0
+            st.info("Oleada reiniciada con nuevos invasores.")
+            st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ----------------- 🃏 SOLITARIO & ♟️ AJEDREZ (NUEVOS) -----------------
+with menu_tabs[2]:
+    st.markdown("### 🃏 Solitario Zafiro (Klondike Rápido)")
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("Cartas activas en mesa:")
+    cols_cards = st.columns(len(st.session_state.solitaire_deck))
+    for i, card in enumerate(st.session_state.solitaire_deck):
+        with cols_cards[i]:
+            st.markdown(f"<div style='background: #f8fafc; color: #0f172a; text-align: center; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 18px;'>{card}</div>", unsafe_allow_html=True)
+            
+    if st.button("🎴 Robar y Combinar Cartas"):
+        new_cards = ["9♥", "Q♣", "10♦", "J♥", "A♦"]
+        st.session_state.solitaire_deck = random.sample(new_cards, 3)
+        st.session_state.coins += 750
+        st.success("¡Jugada válida en el solitario! +750 monedas acreditadas.")
         st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.markdown("### ♟️ Ajedrez Táctico (Reto de Mate)")
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown(f"**Reto actual:** {st.session_state.chess_puzzle['problema']}")
+    st.markdown("Encuentra la jugada ganadora para asegurar el jaque mate en un movimiento:")
+    
+    chess_move = st.selectbox("Selecciona tu jugada maestra:", ["Caballo a c6", "Dama a f7 (Mate)", "Torre a d8", "Peón a e4"])
+    if st.button("Validar Movimiento de Ajedrez"):
+        if chess_move == "Dama a f7 (Mate)":
+            st.session_state.coins += 2000
+            st.success("🏆 ¡Excelente cálculo! Mate exacto. +2,000 monedas ganadas.")
+            st.rerun()
+        else:
+            st.warning("⚠️ Movimiento válido, pero el rey escapó. ¡Prueba otra combinación!")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ----------------- 🎡 CARRUSEL -----------------
-with menu_tabs[2]:
+with menu_tabs[3]:
     st.markdown("### 🎡 Ruleta de Premios ZafiroX")
     st.markdown(f"<div class='card-box'><b>Tokens Disponibles:</b> {st.session_state.tokens} 🪙</div>", unsafe_allow_html=True)
-    if st.button("Girar Ruleta"):
+    if st.button("Girar Ruleta Pro"):
         if st.session_state.tokens > 0:
             st.session_state.tokens -= 1
-            premio = random.choice([500, 1000, 5000, 10000, 50000])
+            premio = random.choice([1000, 2500, 5000, 10000, 25000])
             st.session_state.coins += premio
             st.success(f"🎁 ¡Felicidades! Ganaste {premio:,} monedas en la ruleta.")
             st.rerun()
@@ -233,27 +212,18 @@ with menu_tabs[2]:
             st.error("No tienes tokens disponibles.")
 
 # ----------------- 📢 EVENTOS -----------------
-with menu_tabs[3]:
-    st.markdown("### 🎒 Weekly Pot - $1,000 en Premios")
+with menu_tabs[4]:
+    st.markdown("### 🎒 Torneo Semanal de Arcades")
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
-    st.markdown(f"**Gems recolectados:** {st.session_state.gems}/350")
+    st.markdown(f"**Gems recolectados en juegos:** {st.session_state.gems}/350")
     st.progress(min(st.session_state.gems / 350, 1.0))
-    if st.button("Reclamar Bonus de Gems (+50 Gems)"):
+    if st.button("Reclamar Bono de Gems (+50 Gems)"):
         st.session_state.gems += 50
         st.success("¡Bonus reclamado! +50 Gems.")
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ----------------- 🔥 PREMIOS -----------------
-with menu_tabs[4]:
-    st.markdown("### 🔥 Recompensa de Racha Diaria")
-    st.markdown("<div class='card-box'><b>Día 2 - Reclama tu bono</b></div>", unsafe_allow_html=True)
-    if st.button("Reclamar Bono Diario"):
-        st.session_state.coins += 2500
-        st.success("¡Bono diario reclamado con éxito! +2,500 monedas.")
-        st.rerun()
-
-# ----------------- 💰 BILLETERA -----------------
+# ----------------- 💰 RETIROS -----------------
 with menu_tabs[5]:
     st.markdown("### 🏦 Retiro Inmediato Colombia")
     cop_total = st.session_state.usd_balance * 4000
@@ -261,7 +231,11 @@ with menu_tabs[5]:
     
     metodo = st.selectbox("Método de Retiro", ["Nequi", "Daviplata", "PSE", "PayPal"])
     destino = st.text_input("Número de celular / Cuenta / Correo", placeholder="Ej: 3185312231")
-    monto_retiro = st.number_input("Monto a retirar en USD", min_value=1.0, max_value=max(1.0, st.session_state.usd_balance), value=st.session_state.usd_balance)
+    
+    # Manejo dinámico seguro de límites corregido
+    max_val = max(0.01, st.session_state.usd_balance)
+    min_val = min(1.0, max_val)
+    monto_retiro = st.number_input("Monto a retirar en USD", min_value=min_val, max_value=max_val, value=max_val)
     
     cop_valor = monto_retiro * 4000
     st.info(f"Monto a recibir en tu {metodo}: **${cop_valor:,.0f} COP**")
@@ -271,6 +245,7 @@ with menu_tabs[5]:
             st.session_state.usd_balance -= monto_retiro
             st.session_state.history.append(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Retiro {metodo} ({destino}) -${monto_retiro:.2f} USD")
             st.success(f"¡Retiro de ${cop_valor:,.0f} COP procesado con éxito a tu cuenta de {metodo}!")
+            st.rerun()
         else:
             st.error("Saldo insuficiente para realizar el retiro.")
 
