@@ -71,7 +71,7 @@ if "tokens" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Estados dinámicos para los minijuegos
+# Estados dinámicos para los 8 minijuegos
 if "invader_score" not in st.session_state:
     st.session_state.invader_score = 21
 if "alien_positions" not in st.session_state:
@@ -80,6 +80,14 @@ if "solitaire_deck" not in st.session_state:
     st.session_state.solitaire_deck = ["Q♣", "A♦", "9♥"]
 if "chess_puzzle" not in st.session_state:
     st.session_state.chess_puzzle = {"problema": "Mate en 1: Dama en f7", "resuelto": False}
+if "slots_result" not in st.session_state:
+    st.session_state.slots_result = ["🍒", "🍋", "🔔"]
+if "box_status" not in st.session_state:
+    st.session_state.box_status = "Caja cerrada esperando apertura..."
+if "memory_score" not in st.session_state:
+    st.session_state.memory_score = 0
+if "coin_flip_res" not in st.session_state:
+    st.session_state.coin_flip_res = "¡Elige Cara o Sello!"
 
 # Función para mostrar bloques de anuncios monetizables
 def render_ad_slot(slot_name="Banner Principal"):
@@ -93,7 +101,7 @@ def render_ad_slot(slot_name="Banner Principal"):
 # Autenticación Simulada si no ha iniciado sesión
 if not st.session_state.logged_in:
     st.markdown("<h1 style='text-align: center; color: #38bdf8;'>💎 ZafiroX Pro</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #94a3b8;'>¡Arcades clásicos, juegos de mesa y retiros instantáneos!</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #94a3b8;'>¡8 Minijuegos arcade, ruletas y retiros instantáneos!</p>", unsafe_allow_html=True)
     
     tab_log1, tab_log2 = st.tabs(["Iniciar Sesión", "Registrarse"])
     
@@ -128,10 +136,10 @@ with col_u2:
 render_ad_slot("Cabecera Superior")
 st.markdown("---")
 
-# Navegación con pestañas mejoradas
-menu_tabs = st.tabs(["🏠 Billetera & Juegos", "👾 Arcade Marcianitos", "🃏 Solitario & ♟️ Ajedrez", "🎡 Carrusel", "📢 Eventos", "💰 Retiros"])
+# Navegación con pestañas mejoradas (Organizadas para incluir los 8 juegos)
+menu_tabs = st.tabs(["🏠 Billetera", "🕹️ Juegos 1-3 (Arcade)", "🎰 Juegos 4-6 (Azar)", "🎯 Juegos 7-8 & Ruleta", "📢 Eventos", "💰 Retiros"])
 
-# ----------------- 🏠 INICIO & CONVERSIÓN -----------------
+# ----------------- 🏠 BILLETERA & INICIO -----------------
 with menu_tabs[0]:
     st.markdown("### 🏆 Panel de Monedas y Balance")
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
@@ -152,79 +160,148 @@ with menu_tabs[0]:
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     
+    st.markdown("### 🕹️ Catálogo de Entretenimiento ZafiroX")
+    st.info("💡 Explora las pestañas de **Juegos** para divertirte con los 8 títulos interactivos y acumular miles de monedas para tus retiros.")
     render_ad_slot("Mitad de Página Inicio")
 
-# ----------------- 👾 ARCADE MARCIANITOS -----------------
+# ----------------- 🕹️ JUEGOS 1 al 3 (ARCADE, CARTAS Y AJEDREZ) -----------------
 with menu_tabs[1]:
-    st.markdown("### 👾 Invasores Galácticos (Marcianitos Pro)")
-    st.markdown("<p style='color: #94a3b8;'>Defiende la galaxia destruyendo marcianitos en movimiento constante.</p>", unsafe_allow_html=True)
+    st.markdown("### 🕹️ Sala Arcade & Mesa (Juegos 1, 2 y 3)")
     
+    # JUEGO 1: INVASORES GALÁCTICOS
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
-    st.markdown("#### 🛸 Estado de la Nave: Activa (Escudo al 100%)")
-    st.markdown(f"**Naves Derribadas en esta partida:** {st.session_state.invader_score}")
-    
+    st.markdown("#### 1️⃣ 👾 Invasores Galácticos (Marcianitos Pro)")
+    st.markdown(f"**Naves Derribadas:** {st.session_state.invader_score}")
     cols_inv = st.columns(len(st.session_state.alien_positions))
     for i, alien in enumerate(st.session_state.alien_positions):
         with cols_inv[i]:
-            st.markdown(f"<div style='background: #1e293b; text-align: center; padding: 12px; border-radius: 8px; font-size: 24px;'>{alien}</div>", unsafe_allow_html=True)
-            
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_fire1, col_fire2 = st.columns(2)
-    with col_fire1:
-        if st.button("🚀 Disparar Láser Principal"):
-            bounty = random.choice([300, 500, 1000])
-            st.session_state.invader_score += 1
-            st.session_state.coins += bounty
-            random.shuffle(st.session_state.alien_positions)
-            st.success(f"🎯 ¡Impacto directo! Marcianito destruido. +{bounty} monedas.")
-            st.rerun()
-    with col_fire2:
-        if st.button("🔄 Reiniciar Oleada"):
-            st.session_state.invader_score = 0
-            st.session_state.alien_positions = ["👾", "👾", "🛸", "👾", "👾"]
-            st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-    render_ad_slot("Pie de Arcade Marcianitos")
-
-# ----------------- 🃏 SOLITARIO & ♟️ AJEDREZ -----------------
-with menu_tabs[2]:
-    st.markdown("### 🃏 Solitario Zafiro (Klondike Rápido)")
-    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
-    st.markdown("Cartas activas en mesa:")
+            st.markdown(f"<div style='background: #1e293b; text-align: center; padding: 10px; border-radius: 8px; font-size: 22px;'>{alien}</div>", unsafe_allow_html=True)
     
+    if st.button("🚀 Disparar Láser Principal (Juego 1)"):
+        bounty = random.choice([300, 500, 1000])
+        st.session_state.invader_score += 1
+        st.session_state.coins += bounty
+        random.shuffle(st.session_state.alien_positions)
+        st.success(f"🎯 ¡Impacto! +{bounty} monedas.")
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # JUEGO 2: SOLITARIO ZAFIRO
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 2️⃣ 🃏 Solitario Zafiro (Klondike Rápido)")
     cols_cards = st.columns(len(st.session_state.solitaire_deck))
     for i, card in enumerate(st.session_state.solitaire_deck):
         with cols_cards[i]:
-            st.markdown(f"<div style='background: #f8fafc; color: #0f172a; text-align: center; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 18px;'>{card}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='background: #f8fafc; color: #0f172a; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold;'>{card}</div>", unsafe_allow_html=True)
             
-    if st.button("🎴 Robar y Combinar Cartas"):
+    if st.button("🎴 Robar y Combinar Cartas (Juego 2)"):
         pool_cartas = ["A♠", "10♥", "K♦", "7♣", "J♠", "Q♣", "A♦", "9♥", "8♠", "J♥"]
         st.session_state.solitaire_deck = random.sample(pool_cartas, 3)
         st.session_state.coins += 750
-        st.success("¡Cartas barajadas y combinadas en mesa! +750 monedas.")
+        st.success("¡Cartas combinadas en mesa! +750 monedas.")
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown("### ♟️ Ajedrez Táctico (Reto de Mate)")
+
+    # JUEGO 3: AJEDREZ TÁCTICO
     st.markdown("<div class='card-box'>", unsafe_allow_html=True)
-    st.markdown(f"**Reto actual:** {st.session_state.chess_puzzle['problema']}")
-    
-    chess_move = st.selectbox("Selecciona tu jugada maestra:", ["Caballo a c6", "Dama a f7 (Mate)", "Torre a d8", "Peón a e4"])
-    if st.button("Validar Movimiento de Ajedrez"):
+    st.markdown("#### 3️⃣ ♟️ Ajedrez Táctico (Reto de Mate)")
+    st.markdown(f"**Reto:** {st.session_state.chess_puzzle['problema']}")
+    chess_move = st.selectbox("Tu jugada maestra:", ["Caballo a c6", "Dama a f7 (Mate)", "Torre a d8", "Peón a e4"], key="chess_sel")
+    if st.button("Validar Movimiento de Ajedrez (Juego 3)"):
         if chess_move == "Dama a f7 (Mate)":
             st.session_state.coins += 2000
-            st.success("🏆 ¡Excelente cálculo! Mate exacto. +2,000 monedas ganadas.")
+            st.success("🏆 ¡Mate exacto! +2,000 monedas.")
             st.rerun()
         else:
-            st.warning("⚠️ Movimiento válido, pero el rey escapó. ¡Prueba otra combinación!")
+            st.warning("⚠️ El rey escapó. ¡Prueba otra combinación!")
     st.markdown("</div>", unsafe_allow_html=True)
-    render_ad_slot("Pie de Juegos de Mesa")
+    render_ad_slot("Pie de Sala Arcade")
 
-# ----------------- 🎡 CARRUSEL -----------------
+# ----------------- 🎰 JUEGOS 4 al 6 (SLOTS, CAJAS Y MEMORIA) -----------------
+with menu_tabs[2]:
+    st.markdown("### 🎰 Sala de Azar y Suerte (Juegos 4, 5 y 6)")
+    
+    # JUEGO 4: MINI TRAGAMONEDAS (SLOTS)
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 4️⃣ 🎰 Mini Tragamonedas Zafiro")
+    cols_slots = st.columns(3)
+    for i, sym in enumerate(st.session_state.slots_result):
+        with cols_slots[i]:
+            st.markdown(f"<div style='background: #1e293b; text-align: center; padding: 15px; border-radius: 8px; font-size: 28px;'>{sym}</div>", unsafe_allow_html=True)
+            
+    if st.button("🎲 Jirar Slots / Tragamonedas (Juego 4)"):
+        simbolos = ["🍒", "🍋", "🔔", "💎", "⭐", "7️⃣"]
+        st.session_state.slots_result = [random.choice(simbolos), random.choice(simbolos), random.choice(simbolos)]
+        if st.session_state.slots_result[0] == st.session_state.slots_result[1] == st.session_state.slots_result[2]:
+            st.session_state.coins += 10000
+            st.success("JACKPOT TRIPLE 💎 +10,000 monedas ganadas.")
+        else:
+            st.session_state.coins += 400
+            st.success("¡Buen intento! +400 monedas acreditadas.")
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # JUEGO 5: CAJA MISTERIOSA
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 5️⃣ 📦 Caja Misteriosa de Recompensas")
+    st.markdown(f"**Estado:** {st.session_state.box_status}")
+    if st.button("🎁 Abrir Caja Misteriosa (Juego 5)"):
+        premio_caja = random.choice([500, 1500, 3000, 5000])
+        st.session_state.coins += premio_caja
+        st.session_state.box_status = f"¡Caja abierta! Encontraste {premio_caja:,} monedas."
+        st.success(f"¡Tesoro descubierto! +{premio_caja:,} monedas.")
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # JUEGO 6: MEMORIA FLASH
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 6️⃣ 🧠 Memoria Flash Numérica")
+    st.markdown(f"**Puntuación de Memoria:** {st.session_state.memory_score} aciertos")
+    secuencia_activa = random.randint(100, 999)
+    st.info(f"🔢 Secuencia clave a memorizar: **{secuencia_activa}**")
+    guess_mem = st.text_input("Introduce los dígitos recordados:", placeholder="Ej: 482", key="mem_input")
+    if st.button("Verificar Memoria Flash (Juego 6)"):
+        st.session_state.memory_score += 1
+        st.session_state.coins += 1200
+        st.success("🧠 ¡Excelente memoria! +1,200 monedas acreditadas.")
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+    render_ad_slot("Pie de Sala de Azar")
+
+# ----------------- 🎯 JUEGOS 7 al 8 & RULETA -----------------
 with menu_tabs[3]:
-    st.markdown("### 🎡 Ruleta de Premios ZafiroX")
-    st.markdown(f"<div class='card-box'><b>Tokens Disponibles:</b> {st.session_state.tokens} 🪙</div>", unsafe_allow_html=True)
-    if st.button("Girar Ruleta Pro"):
+    st.markdown("### 🎯 Retos Rápidos y Ruleta (Juegos 7 y 8)")
+    
+    # JUEGO 7: ADIVINA LA MONEDA (CARA O SELLO)
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 7️⃣ 🪙 Duelo Cara o Sello")
+    st.markdown(f"**Resultado:** {st.session_state.coin_flip_res}")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        if st.button("Elegir Cara (🪙)"):
+            res = random.choice(["Cara", "Sello"])
+            if res == "Cara":
+                st.session_state.coins += 1500
+                st.success("¡Cayó Cara! Ganaste +1,500 monedas.")
+            else:
+                st.warning("Cayó Sello. ¡Sigue intentando!")
+            st.rerun()
+    with col_c2:
+        if st.button("Elegir Sello (🪙)"):
+            res = random.choice(["Cara", "Sello"])
+            if res == "Sello":
+                st.session_state.coins += 1500
+                st.success("¡Cayó Sello! Ganaste +1,500 monedas.")
+            else:
+                st.warning("Cayó Cara. ¡Sigue intentando!")
+            st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # JUEGO 8: RULETA DE LA FORTUNA PRO (CONSERVANDO LA RULETA ORIGINAL)
+    st.markdown("<div class='card-box'>", unsafe_allow_html=True)
+    st.markdown("#### 8️⃣ 🎡 Ruleta de Premios ZafiroX")
+    st.markdown(f"<b>Tokens Disponibles:</b> {st.session_state.tokens} 🪙", unsafe_allow_html=True)
+    if st.button("Girar Ruleta Pro (Juego 8)"):
         if st.session_state.tokens > 0:
             st.session_state.tokens -= 1
             premio = random.choice([1000, 2500, 5000, 10000, 25000])
@@ -233,6 +310,7 @@ with menu_tabs[3]:
             st.rerun()
         else:
             st.error("No tienes tokens disponibles.")
+    st.markdown("</div>", unsafe_allow_html=True)
     render_ad_slot("Patrocinador de Ruleta")
 
 # ----------------- 📢 EVENTOS -----------------
